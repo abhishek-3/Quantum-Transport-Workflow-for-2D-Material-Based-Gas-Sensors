@@ -1,7 +1,7 @@
 # Transport Calculations — TranSIESTA/TBtrans 4.1-b4
 
 A complete, reusable workflow for computing quantum transport properties
-of 2D MXene systems using SIESTA, TranSIESTA, and TBtrans, with
+of 2D systems using SIESTA, TranSIESTA, and TBtrans, with
 post-processing via sisl.
 
 ## Repository Structure
