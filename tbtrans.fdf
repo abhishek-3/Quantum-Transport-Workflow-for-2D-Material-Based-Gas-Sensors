@@ -1,0 +1,206 @@
+# ============================================================
+#  TBtrans 4.1-b4 — Post-processing Input File
+#  Purpose : Compute transmission T(E), eigenchannels,
+#            and spectral DOS from TranSIESTA output.
+#
+#  INSTRUCTIONS FOR USERS
+#  ----------------------
+#  1. Run this in the SAME directory as scattering.fdf
+#     (all required .TSHS and .TSDE files are already there).
+#  2. Set TBT.Voltage to match the TranSIESTA bias point.
+#  3. At TBT.Voltage = 0.0 eV: ChemPots block not needed.
+#     At TBT.Voltage > 0.0 eV: uncomment ChemPots blocks
+#     and add chem-pot lines to electrode blocks.
+#  4. Run: mpirun -np <N> tbtrans tbtrans.fdf > tbtrans.out
+#     Or  : tbtrans -V 0.1:eV -D V0.1 tbtrans.fdf > V0.1/tbt.out
+#
+#  OUTPUT FILES
+#  ------------
+#  scattering.TBT.nc              : main NetCDF output (use sisl)
+#  scattering.TRANS_Left_Right    : k-resolved transmission
+#  scattering.AVTRANS_Left_Right  : k-averaged transmission
+#  scattering.TEIG_Left_Right     : k-resolved eigenchannels
+#  scattering.AVTEIG_Left_Right   : k-averaged eigenchannels
+#  scattering.ADOS_Left/Right     : spectral DOS
+#  scattering.AVADOS_Left/Right   : k-averaged spectral DOS
+# ============================================================
+
+SystemName          TBtrans_Post_Processing
+SystemLabel         scattering         # must match scattering.fdf SystemLabel
+
+# ============================================================
+# SPECIES — must be identical to scattering.fdf
+# ============================================================
+
+NumberOfSpecies     3                  # <-- EDIT: match your system
+NumberOfAtoms       360                # <-- EDIT: match your system
+
+%block ChemicalSpeciesLabel
+  1      42            Mo              # <-- EDIT: replace with your species
+  2       6            C
+  3       8            O
+%endblock ChemicalSpeciesLabel
+
+# ============================================================
+# BIAS VOLTAGE
+# Must match the TranSIESTA run being post-processed.
+# ============================================================
+
+TBT.Voltage         0.0 eV            # <-- EDIT: match scattering.fdf TS.Voltage
+
+# ============================================================
+# ELECTRODE DEFINITIONS
+# Must be identical to scattering.fdf electrode blocks.
+# Add chem-pot lines when TBT.Voltage != 0.
+# ============================================================
+
+%block TBT.Elecs
+  Left
+  Right
+%endblock TBT.Elecs
+
+%block TBT.Elec.Left
+  HS                  electrode.TSHS   # <-- EDIT: electrode filename
+  semi-inf-dir        -A               # <-- EDIT: match scattering.fdf
+  electrode-position  begin 1          # <-- EDIT: match scattering.fdf
+  used-atoms          120              # <-- EDIT: match scattering.fdf
+  Bulk                true
+  # chem-pot          Left             # uncomment when TBT.Voltage != 0
+%endblock TBT.Elec.Left
+
+%block TBT.Elec.Right
+  HS                  electrode.TSHS   # <-- EDIT: electrode filename
+  semi-inf-dir        +A               # <-- EDIT: match scattering.fdf
+  electrode-position  end -1           # <-- EDIT: match scattering.fdf
+  used-atoms          120              # <-- EDIT: match scattering.fdf
+  Bulk                true
+  # chem-pot          Right            # uncomment when TBT.Voltage != 0
+%endblock TBT.Elec.Right
+
+# ============================================================
+# CHEMICAL POTENTIALS
+# Not needed at zero bias (TBtrans manual p.21).
+# Uncomment entire section when TBT.Voltage != 0,
+# AND uncomment chem-pot lines in electrode blocks above.
+# ============================================================
+
+# %block TBT.ChemPots
+#   Left
+#   Right
+# %endblock TBT.ChemPots
+#
+# %block TBT.ChemPot.Left
+#   mu    V/2
+# %endblock TBT.ChemPot.Left
+#
+# %block TBT.ChemPot.Right
+#   mu   -V/2
+# %endblock TBT.ChemPot.Right
+
+# ============================================================
+# DEVICE REGION
+# TBtrans manual p.16: defaults to all atoms except electrodes.
+# Set explicitly for accurate DOS extraction.
+# EDIT: atom range = used-atoms+1 to N-used-atoms
+# ============================================================
+
+TBT.Atoms.Device    [121 -- 240]      # <-- EDIT: device atom range
+
+# Recommended true for non-orthogonal basis sets (SZP/DZP)
+TBT.Atoms.Device.Connect   true
+
+# ============================================================
+# k-GRID
+# TBtrans manual p.17: use denser k-grid than TranSIESTA
+# for smoother, well-converged transmission curves.
+# Transport direction (A): dense; lateral (B): moderate; C: 1
+# ============================================================
+
+%block TBT.k
+  21   0   0   0.0    # <-- EDIT: transport direction — denser than scattering
+   0   9   0   0.0    # <-- EDIT: lateral direction
+   0   0   1   0.0    # vacuum direction — always 1
+%endblock TBT.k
+
+# ============================================================
+# ENERGY GRID
+# TBtrans manual p.19-20: range must extend beyond ±V/2.
+# Adjust 'from' and 'to' to cover your band structure range.
+# For metallic systems: -3.0 to 3.0 eV is standard.
+# For bias scans: ensure |from| > V_max/2 and |to| > V_max/2
+# ============================================================
+
+TBT.Contours.Eta    0.0 eV
+
+%block TBT.Contours
+  line
+%endblock TBT.Contours
+
+%block TBT.Contour.line
+  from  -3.0 eV  to  3.0 eV           # <-- EDIT: energy range
+    delta  0.01 eV                     # <-- EDIT: energy resolution
+    method mid-rule
+%endblock TBT.Contour.line
+
+# ============================================================
+# PHYSICAL QUANTITIES
+# TBtrans manual p.12-15
+# ============================================================
+
+# Transmission eigenvalues — integer: number of channels
+# Set to 0 to disable eigenchannel calculation
+TBT.T.Eig           4                 # <-- EDIT: number of eigenchannels
+
+# Spectral DOS projected on device atoms
+TBT.DOS.A           true
+
+# Bulk electrode transmission and DOS (set true if needed)
+TBT.T.Bulk          false
+TBT.DOS.Elecs       false
+
+# Orbital currents — needed for real-space eigenchannel plots
+# Requires NetCDF4-compiled TBtrans
+# TBT.Current.Orb   true
+# TBT.Symmetry.TimeReversal  false    # required when Current.Orb is true
+
+# ============================================================
+# OUTPUT PRECISION
+# TBtrans manual p.27: single = half disk, sufficient accuracy
+# ============================================================
+
+TBT.CDF.Precision         single
+TBT.CDF.T.Precision       single
+TBT.CDF.DOS.Precision     single
+TBT.CDF.T.Eig.Precision   single
+
+# ============================================================
+# BTD PIVOTING (performance optimization)
+# TBtrans manual p.25: run analyze step before production run
+#   tbtrans -fdf TBT.Analyze tbtrans.fdf > analyze.out
+# Then uncomment the best pivot method from analyze output.
+# ============================================================
+
+# TBT.BTD.Pivot.Device    atom+GGPS   # <-- uncomment after analyze step
+
+# ============================================================
+# LATTICE — must match scattering.fdf exactly
+# ============================================================
+
+LatticeConstant     1.0 Ang
+
+%block LatticeVectors
+  34.4722595220000017    0.0000000000000000    0.0000000000000000
+   0.0000000000000000   14.9269280430000002    0.0000000000000000
+   0.0000000000000000    0.0000000000000000   31.0964279179999998
+%endblock LatticeVectors
+
+# ============================================================
+# ATOMIC COORDINATES — identical to scattering.fdf
+# ============================================================
+
+AtomicCoordinatesFormat   Ang
+
+%block AtomicCoordinatesAndAtomicSpecies
+# <-- PASTE YOUR SCATTERING REGION COORDINATES HERE -->
+# Must be identical to scattering.fdf
+%endblock AtomicCoordinatesAndAtomicSpecies

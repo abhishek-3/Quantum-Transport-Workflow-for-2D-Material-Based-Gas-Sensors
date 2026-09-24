@@ -1,0 +1,137 @@
+# ============================================================
+#  SIESTA 4.1-b4 — Electrode Calculation
+#  Purpose : Generate the .TSHS file required by TranSIESTA
+#            for the scattering region calculation.
+#
+#  INSTRUCTIONS FOR USERS
+#  ----------------------
+#  1. Replace the LatticeVectors block with your electrode
+#     unit-cell lattice vectors (no vacuum in transport dir).
+#  2. Replace the AtomicCoordinatesAndAtomicSpecies block
+#     with your electrode atomic coordinates.
+#  3. Update NumberOfSpecies, NumberOfAtoms, and
+#     ChemicalSpeciesLabel to match your system.
+#  4. Set the k-grid: transport direction needs dense sampling;
+#     vacuum direction (if any) stays at 1.
+#  5. Run: mpirun -np <N> siesta electrode.fdf > electrode.out
+#
+#  OUTPUT FILES NEEDED FOR NEXT STEP
+#  -----------------------------------
+#  electrode.TSHS  →  copy to scattering directory
+# ============================================================
+
+SystemName          Electrode
+SystemLabel         electrode          # all output files use this prefix
+
+# ============================================================
+# SPECIES AND BASIS
+# Add/remove species to match your electrode composition.
+# ============================================================
+
+NumberOfSpecies     3                  # <-- EDIT: number of distinct species
+NumberOfAtoms       120                # <-- EDIT: total atoms in electrode cell
+
+%block ChemicalSpeciesLabel
+# Index  AtomicNumber  Label
+  1      42            Mo              # <-- EDIT: replace with your species
+  2       6            C
+  3       8            O
+%endblock ChemicalSpeciesLabel
+
+# Basis set
+# SZP is recommended for transport; use DZP for higher accuracy
+PAO.BasisSize       SZP
+PAO.EnergyShift     0.05 Ry
+PAO.SplitNorm       0.25
+
+# ============================================================
+# DFT SETTINGS
+# ============================================================
+
+XC.functional       GGA
+XC.authors          PBE
+
+MeshCutoff          400.0 Ry
+
+# ============================================================
+# SCF CONVERGENCE
+# ============================================================
+
+MaxSCFIterations      500
+SCF.Mixer.Method      Pulay
+SCF.Mixer.History     8
+SCF.Mixer.Weight      0.10
+SCF.DM.Tolerance      1.0e-5          # tighter than usual — electrode DM
+                                       # seeds the scattering calculation
+
+ElectronicTemperature  25 meV
+
+# ============================================================
+# SPIN
+# Uncomment if your system is magnetic.
+# ============================================================
+
+# SpinPolarized         true
+# DM.InitSpinAF         true
+
+# ============================================================
+# k-GRID
+# Transport direction: dense sampling (9 or more)
+# Lateral direction  : moderate sampling (9)
+# Vacuum direction   : always 1
+#
+# Example below assumes:
+#   Transport along A (X), lateral along B (Y), vacuum along C (Z)
+# Adjust diagonal elements to match your transport geometry.
+# ============================================================
+
+%block kgrid_Monkhorst_Pack
+   9   0   0   0.0    # <-- EDIT: transport direction (A) — dense
+   0   9   0   0.0    # <-- EDIT: lateral direction (B)
+   0   0   1   0.0    # vacuum direction (C) — always 1
+%endblock kgrid_Monkhorst_Pack
+
+# ============================================================
+# OUTPUT — SaveHS is mandatory for TranSIESTA
+# ============================================================
+
+SaveHS                  true           # writes electrode.TSHS — DO NOT REMOVE
+SaveRho                 false
+WriteCoordsStep         false
+WriteMDXmol             false
+COOP.Write              false
+
+# ============================================================
+# LATTICE VECTORS
+# Replace with your electrode unit-cell vectors.
+# The electrode must have NO vacuum in the transport direction.
+# The transport-direction cell length should equal one
+# principal layer (atoms interact only with nearest image).
+# ============================================================
+
+LatticeConstant     1.0 Ang
+
+%block LatticeVectors
+# a1_x   a1_y   a1_z
+# a2_x   a2_y   a2_z
+# a3_x   a3_y   a3_z
+  11.4907531740000000    0.0000000000000000    0.0000000000000000
+   0.0000000000000000   14.9269280430000002    0.0000000000000000
+   0.0000000000000000    0.0000000000000000   31.0964279179999998
+%endblock LatticeVectors
+
+# ============================================================
+# ATOMIC COORDINATES
+# Format: x(Ang)  y(Ang)  z(Ang)  species_index
+# species_index refers to the order in ChemicalSpeciesLabel.
+# ============================================================
+
+AtomicCoordinatesFormat   Ang
+
+%block AtomicCoordinatesAndAtomicSpecies
+# x               y               z               species
+# <-- PASTE YOUR ELECTRODE COORDINATES HERE -->
+# Example (replace entirely):
+#   0.000000   0.000000   0.000000   1   # Mo
+#   1.436344   1.436344   1.436344   2   # C
+%endblock AtomicCoordinatesAndAtomicSpecies
