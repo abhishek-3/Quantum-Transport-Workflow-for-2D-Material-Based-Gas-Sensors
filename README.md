@@ -1,4 +1,4 @@
-# MXene Transport Calculations — TranSIESTA/TBtrans 4.1-b4
+# Transport Calculations — TranSIESTA/TBtrans 4.1-b4
 
 A complete, reusable workflow for computing quantum transport properties
 of 2D MXene systems using SIESTA, TranSIESTA, and TBtrans, with
@@ -7,7 +7,7 @@ post-processing via sisl.
 ## Repository Structure
 
 ```
-MXene-Transport/
+Transport/
 ├── electrode/
 │   └── electrode.fdf          # SIESTA electrode SCF input
 ├── scattering/
@@ -295,6 +295,7 @@ python extract_transport.py
 If you use this workflow, please cite:
 
 - SIESTA: J. M. Soler et al., *J. Phys.: Condens. Matter* 14, 2745 (2002)
+- M. Brandbyge, J.-L. Mozos, P. Ordejón, J. Taylor, and K. Stokbro, Phys. Rev. B 65, 165401 (2002).
 - TranSIESTA: N. Papior et al., *Comput. Phys. Commun.* 212, 8 (2017)
 - TBtrans: N. Papior et al., *Comput. Phys. Commun.* 212, 8 (2017)
 - sisl: N. R. Papior, *sisl* (2018), https://doi.org/10.5281/zenodo.597181
@@ -303,7 +304,5 @@ If you use this workflow, please cite:
 
 ## Author
 
-[Your Name]
-[Your Institution]
-[Your Email]
-[Your ORCID]
+Abhishek
+abhishek.3@iitj.ac.in
