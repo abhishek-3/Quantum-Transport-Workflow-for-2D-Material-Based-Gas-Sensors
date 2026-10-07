@@ -4,22 +4,6 @@ A complete, reusable workflow for computing quantum transport properties
 of 2D systems using SIESTA, TranSIESTA, and TBtrans, with
 post-processing via sisl.
 
-## Repository Structure
-
-```
-Transport/
-├── electrode/
-│   └── electrode.fdf          # SIESTA electrode SCF input
-├── scattering/
-│   ├── scattering.fdf         # TranSIESTA scattering region input
-│   └── tbtrans.fdf            # TBtrans post-processing input
-├── analysis/
-│   └── extract_transport.py   # sisl post-processing and plotting
-└── README.md
-```
-
----
-
 ## Requirements
 
 ### Software
